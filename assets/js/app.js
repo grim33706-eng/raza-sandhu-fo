@@ -20,11 +20,12 @@ function showToast(message, type){
 }
 
 // ---------- Theme toggle ----------
+// The initial theme is already applied by the inline script in <head> (before
+// first paint, so there's no flash of the wrong theme). This just wires up the
+// toggle button for switching afterwards.
 const root = document.documentElement;
 const themeToggle = document.getElementById('themeToggle');
 function applyTheme(t){ root.setAttribute('data-theme', t); localStorage.setItem('raza-theme', t); }
-const savedTheme = localStorage.getItem('raza-theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-applyTheme(savedTheme);
 themeToggle.addEventListener('click', () => {
   applyTheme(root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
 });
@@ -305,14 +306,24 @@ document.addEventListener('click', (e) => { if (!fabWrap.contains(e.target)) fab
 // Bug fix: the FAB is fixed to the viewport's bottom-right corner, which is exactly
 // where the footer's rightmost social icon sits once you scroll to the bottom of the
 // page — the FAB (higher z-index) then physically covers that icon and swallows its
-// click. Whenever the footer becomes visible, push the FAB up to clear it.
-const siteFooter = document.querySelector('footer');
-const FAB_GAP = 26; // matches the default `bottom` value in CSS
+// click. Whenever the footer becomes visible, push the FAB up just enough to clear it.
+//
+// Previous version measured the overlap against the WHOLE <footer> element's top
+// edge, so on mobile — where the footer is much taller (stacked logo/tagline/links) —
+// that distance could balloon to several hundred px, which is why the FAB button
+// visibly jumped up near the top of the screen instead of sitting just above the
+// footer icons. Measuring against .footer-social specifically (the actual row the
+// FAB needs to clear) keeps the push proportional to the real overlap, however tall
+// the rest of the footer gets.
+const footerSocial = document.querySelector('.footer-social');
+const FAB_GAP = 26;   // matches the default `bottom` value in CSS
+const FAB_SIZE = 60;  // matches .fab-wrap's width/height in CSS
 function keepFabClearOfFooter(){
-  if (!siteFooter) return;
-  const footerRect = siteFooter.getBoundingClientRect();
-  const overlap = window.innerHeight - footerRect.top;
-  fabWrap.style.bottom = overlap > 0 ? `${overlap + FAB_GAP}px` : `${FAB_GAP}px`;
+  if (!footerSocial) return;
+  const rect = footerSocial.getBoundingClientRect();
+  const fabDefaultTop = window.innerHeight - FAB_GAP - FAB_SIZE;
+  const intrusion = fabDefaultTop - rect.top; // how far footer-social pokes into the FAB's default zone
+  fabWrap.style.bottom = intrusion > 0 ? `${FAB_GAP + intrusion}px` : `${FAB_GAP}px`;
 }
 keepFabClearOfFooter();
 window.addEventListener('scroll', keepFabClearOfFooter, { passive: true });

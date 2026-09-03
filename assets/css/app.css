@@ -565,8 +565,13 @@ footer{background:#111118; color:#fff; padding:60px 0 28px; border-top:1px solid
   .dash-card{max-width:460px;}
   .about-grid, .contact-grid, .content-grid{grid-template-columns:1fr; gap:40px;}
   .pillar-card:nth-child(2), .pillar-card:nth-child(3){ margin-top:0; }
-  .avatar-block{position:static; display:flex; align-items:center; gap:20px;}
-  .avatar{margin-bottom:0;}
+  /* Stacked as two rows — photo on its own row, facts below — instead of a
+     cramped side-by-side row that squashed both down to a sliver. Aspect-ratio
+     kept at 1/1 (square) to match the source photo exactly — the earlier 16/10
+     wide crop chopped the top of the face off since the real photo is square,
+     not wide. */
+  .avatar-block{position:static; display:flex; flex-direction:column; gap:20px;}
+  .avatar{width:100%; height:auto; aspect-ratio:1/1; margin-bottom:0;}
   .fact-list{flex:1;}
   .strat-grid{grid-template-columns:repeat(2,1fr);}
 }
@@ -574,10 +579,30 @@ footer{background:#111118; color:#fff; padding:60px 0 28px; border-top:1px solid
   .exp-svg{display:none;}
   .exp-row, .exp-row:nth-child(even){flex-direction:column !important;}
   .exp-card{width:100%;}
+  /* .exp-row.single .exp-card{width:calc(50% - 18px)} (desktop rule, same selector
+     specificity) was still winning over the plain ".exp-card{width:100%}" above by
+     cascade order once screens got narrow, which is why only the 5th/last card sat
+     at half-width and looked broken. Re-declaring the same compound selector here
+     — later in the file, so it wins the tie — forces it full-width too. */
+  .exp-row.single .exp-card{width:100%;}
   .exp-grid{gap:16px; position:relative; padding-left:24px;}
-  .exp-grid::before{content:"";position:absolute;left:8px;top:6px;bottom:6px;width:2px;background:linear-gradient(var(--purple-500),transparent);}
-  .exp-card{margin-bottom:18px;}
-  .exp-num{left:-24px; top:14px;}
+  /* Line sits at left:14px (2px wide → center 15px) so it lines up exactly with the
+     number badge's own center (badge is 30px wide, offset left:-24px from a card
+     that starts at padding-left:24 → badge spans 0–30px, center 15px). Previously
+     the line was at left:8px against that same center-15 badge, a 7px mismatch
+     that made every number look visibly off-center on the line. */
+  .exp-grid::before{
+    content:""; position:absolute; z-index:0; left:14px; top:4px; bottom:4px; width:2px; border-radius:2px;
+    background:linear-gradient(var(--purple-700), var(--purple-400) 55%, transparent);
+  }
+  .exp-card{margin-bottom:18px; position:relative; z-index:1;}
+  .exp-num{
+    left:-24px; top:14px; z-index:2;
+    /* A ring in the section's own background color makes the line look like it
+       passes cleanly BEHIND each numbered badge (a proper timeline look) instead
+       of just touching its edge. */
+    box-shadow:0 0 0 5px var(--bg-tint);
+  }
 }
 @media (max-width:760px){
   nav.links{position:fixed; top:64px; left:0; right:0; background:var(--surface); flex-direction:column; align-items:flex-start;
@@ -591,13 +616,21 @@ footer{background:#111118; color:#fff; padding:60px 0 28px; border-top:1px solid
   .strat-grid{grid-template-columns:1fr;}
   .footer-top{flex-direction:column;}
   .wrap{padding:0 20px;}
+  /* All 6 footer links on one line: tighter gap + smaller type so they fit
+     instead of wrapping "Contact" onto its own second line. */
+  .footer-bottom{flex-direction:column; align-items:center; text-align:center; gap:14px;}
+  .footer-links{justify-content:center; gap:5vw; width:100%;}
+  .footer-links a{font-size:0.74rem; white-space:nowrap;}
 }
 @media (max-width:520px){
   .hero-ctas{flex-direction:column; align-items:stretch;}
   .hero-stats{gap:22px;}
   .contact-form{padding:26px 20px;}
   .content-pillars{grid-template-columns:1fr;}
+  .footer-links{gap:4vw;}
+  .footer-links a{font-size:0.68rem;}
 }
+
 
 
 /* ================================================================
